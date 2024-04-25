@@ -68,6 +68,9 @@ if __name__ == '__main__':
     epochs += resume_epoch
 
     n_iter = 0
+    Epoch_loss_cls = []
+    Epoch_loss_regr = []
+    Epoch_loss = []
     for epoch in range(resume_epoch+1, epochs):
         print('Epoch {}/{}'.format(epoch, epochs))
         epoch_size = len(dataset) // 1
@@ -80,10 +83,6 @@ if __name__ == '__main__':
             print('lr: %s'% param_group['lr'])
         print('#'*80)
 
-        Epoch_loss_cls = []
-        Epoch_loss_regr = []
-        Epoch_loss = []
-
         for batch_i, (imgs, clss, regrs) in enumerate(dataloader):
             since = time.time()
             imgs = imgs.to(device)
@@ -91,7 +90,8 @@ if __name__ == '__main__':
             regrs = regrs.to(device)
     
             optimizer.zero_grad()
-    
+
+            print(imgs.size())
             out_cls, out_regr = model(imgs)
             loss_regr = critetion_regr(out_regr, regrs)
             loss_cls = critetion_cls(out_cls, clss)
@@ -111,34 +111,35 @@ if __name__ == '__main__':
                     'epoch: loss_cls:{:.4f}--loss_regr:{:.4f}--loss:{:.4f}\n'.format(epoch_loss_cls/mmp, epoch_loss_regr/mmp, epoch_loss/mmp)
                 )
 
-            Epoch_loss_cls.append(epoch_loss_cls/mmp)
-            Epoch_loss_regr.append(epoch_loss_regr/mmp)
-            Epoch_loss.append(epoch_loss/mmp)
+        Epoch_loss_cls.append(epoch_loss_cls/epoch_size)
+        Epoch_loss_regr.append(epoch_loss_regr/epoch_size)
+        Epoch_loss.append(epoch_loss/epoch_size)
 
-            if epoch % 1 == 0:
-                iterations = range(epoch)  # 迭代次数
+        if epoch % 1 == 0:
+            iterations = range(epoch)  # 迭代次数
 
-                # 创建一个新的图表
-                plt.figure(figsize=(10, 5))
+            # 创建一个新的图表
+            plt.figure(figsize=(10, 5))
 
-                # 绘制损失曲线
-                plt.plot(iterations, Epoch_loss_cls,  label='Classification Loss')
-                plt.plot(iterations, Epoch_loss_regr,  label='Regression Loss')
-                plt.plot(iterations, Epoch_loss, label='Total Loss')
+            # 绘制损失曲线
+            print(iterations)
+            print(Epoch_loss_cls)
+            plt.plot(iterations, Epoch_loss_cls, label='Classification Loss')
+            plt.plot(iterations, Epoch_loss_regr, label='Regression Loss')
+            plt.plot(iterations, Epoch_loss, label='Total Loss')
 
-                # 添加图表标题和坐标轴标签
-                plt.title('Loss Curves')
-                plt.xlabel('Iteration')
-                plt.ylabel('Loss')
-                plt.legend()  # 显示图例
+            # 添加图表标题和坐标轴标签
+            plt.title('Loss Curves')
+            plt.xlabel('Iteration')
+            plt.ylabel('Loss')
+            plt.legend()  # 显示图例
 
-                if not os.path.exists('./log/'):
-                    os.makedirs('./log/')
+            if not os.path.exists('./log/'):
+                os.makedirs('./log/')
 
-                # 保存图表到./log/目录下
-                plt.savefig('./log/loss_curves.png')
+            # 保存图表到./log/目录下
+            plt.savefig('./log/loss_curves.png')
 
-        
         epoch_loss_cls /= epoch_size
         epoch_loss_regr /= epoch_size
         epoch_loss /= epoch_size
